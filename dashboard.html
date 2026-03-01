@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dashboard | YudhhAbhyas Portal</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+    <!-- Desktop Navbar -->
+    <nav class="navbar">
+        <h1 class="brand" style="color: var(--primary);">YudhhAbhyas</h1>
+        <div class="nav-links">
+            <button id="logoutBtn" class="btn btn-outline" style="font-size: 0.9rem; padding: 0.5rem 1rem;">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </button>
+        </div>
+        <!-- Mobile Logout Icon -->
+        <button class="logout-btn btn btn-outline mobile-only"
+            style="padding: 0.5rem; border: none; font-size: 1.2rem; display: block;">
+            <i class="fas fa-sign-out-alt"></i>
+        </button>
+    </nav>
+
+    <main class="main-content">
+        <div class="fade-in" style="margin-bottom: 2rem;">
+            <h2 id="userNameDisplay" style="font-size: 1.8rem;">आपका स्वागत है</h2>
+            <p style="color: var(--text-dim);">आपकी CGPSC तैयारी की प्रगति</p>
+        </div>
+
+        <!-- Advanced Analytics Section -->
+        <div class="grid-container fade-in" style="margin-bottom: 2rem;">
+            <!-- Radar Chart: Paper Progress -->
+            <div class="card chart-card" style="display: flex; flex-direction: column; align-items: center;">
+                <h3 style="margin-bottom: 1rem; font-size: 1rem; color: var(--primary);">पेपर अनुसार प्रगति</h3>
+                <div style="width: 100%; height: 250px;">
+                    <canvas id="statsChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Doughnut Chart: Mastery Levels -->
+            <div class="card chart-card" style="display: flex; flex-direction: column; align-items: center;">
+                <h3 style="margin-bottom: 1rem; font-size: 1rem; color: var(--primary);">तैयारी की स्थिति (Status)</h3>
+                <div style="width: 100%; height: 250px;">
+                    <canvas id="masteryChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Bar Chart: Revision Force -->
+            <div class="card chart-card" style="display: flex; flex-direction: column; align-items: center;">
+                <h3 style="margin-bottom: 1rem; font-size: 1rem; color: var(--primary);">रिवीजन की गहनता (Revision)</h3>
+                <div style="width: 100%; height: 250px;">
+                    <canvas id="revisionChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Overall Progress Bar -->
+        <div class="card fade-in" style="margin-bottom: 2rem; text-align: center;">
+            <span id="overallProgressText" style="font-weight: 600; font-size: 1.2rem; color: var(--primary);">0% एकीकृत
+                प्रगति</span>
+            <div class="progress-container"
+                style="margin-top: 0.5rem; height: 12px; background: rgba(255,255,255,0.05);">
+                <div class="progress-bar" id="overallProgressBar" style="box-shadow: 0 0 15px var(--primary-glow);">
+                </div>
+            </div>
+        </div>
+
+        <!-- Papers Grid -->
+        <div class="grid-container fade-in" id="syllabusContainer">
+            <!-- Paper cards injected here -->
+        </div>
+    </main>
+
+    <!-- Bottom Navigation (Mobile) -->
+    <nav class="bottom-nav">
+        <a href="dashboard.html" class="nav-item active">
+            <i class="fas fa-th-large"></i>
+            <span>डैशबोर्ड</span>
+        </a>
+        <a href="leaderboard.html" class="nav-item">
+            <i class="fas fa-trophy"></i>
+            <span>रणभूमि</span>
+        </a>
+    </nav>
+
+    <script src="syllabus.js"></script>
+    <script src="script.js"></script>
+    <script>
+        let statsChart, masteryChart, revisionChart;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const user = JSON.parse(localStorage.getItem('user'));
+            if (!user) {
+                window.location.href = 'index.html';
+                return;
+            }
+            // Update UI
+            renderSyllabus();
+            initCharts();
+        });
+
+        function initCharts() {
+            const radarCtx = document.getElementById('statsChart').getContext('2d');
+            const doughnutCtx = document.getElementById('masteryChart').getContext('2d');
+            const barCtx = document.getElementById('revisionChart').getContext('2d');
+
+            // 1. Radar: Paper Progress
+            statsChart = new Chart(radarCtx, {
+                type: 'radar',
+                data: {
+                    labels: syllabus.map(p => p.name.split(':')[0]),
+                    datasets: [{
+                        label: 'पूर्णता %',
+                        data: syllabus.map(() => 0),
+                        backgroundColor: 'rgba(251, 191, 36, 0.15)',
+                        borderColor: '#fbbf24',
+                        borderWidth: 2,
+                        pointBackgroundColor: '#fbbf24'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            angleLines: { color: 'rgba(255, 255, 255, 0.1)' },
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            pointLabels: { color: '#94a3b8', font: { size: 10 } },
+                            ticks: { display: false },
+                            suggestedMin: 0,
+                            suggestedMax: 100
+                        }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+
+            // 2. Doughnut: Mastery Levels
+            masteryChart = new Chart(doughnutCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['तैयार (Green)', 'प्रगति पर (Yellow)', 'मुश्किल (Red)', 'बाकी (None)'],
+                    datasets: [{
+                        data: [0, 0, 0, 100],
+                        backgroundColor: ['#10b981', '#f59e0b', '#ef4444', 'rgba(255,255,255,0.05)'],
+                        borderColor: 'transparent',
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8', boxWidth: 10, font: { size: 10 } } } },
+                    cutout: '70%'
+                }
+            });
+
+            // 3. Bar: Revision Intensity
+            revisionChart = new Chart(barCtx, {
+                type: 'bar',
+                data: {
+                    labels: syllabus.map(p => p.name.split(':')[0]),
+                    datasets: [{
+                        label: 'कुल रिवीजन',
+                        data: syllabus.map(() => 0),
+                        backgroundColor: 'rgba(251, 191, 36, 0.4)',
+                        borderColor: '#fbbf24',
+                        borderWidth: 1,
+                        borderRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
+                        x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+
+            updateAnalytics();
+        }
+
+        function renderSyllabus() {
+            const container = document.getElementById('syllabusContainer');
+            container.innerHTML = '';
+
+            syllabus.forEach(paper => {
+                const card = document.createElement('div');
+                card.className = 'card fade-in';
+
+                const userProgress = JSON.parse(localStorage.getItem(`progress_${paper.id}`)) || {};
+                const userStatus = JSON.parse(localStorage.getItem(`status_${paper.id}`)) || {};
+                const userRevision = JSON.parse(localStorage.getItem(`revision_${paper.id}`)) || {};
+
+                let totalTopics = 0;
+                let completedTopics = 0;
+                paper.parts.forEach(part => {
+                    totalTopics += part.topics.length;
+                    part.topics.forEach(topic => {
+                        if (userProgress[topic]) completedTopics++;
+                    });
+                });
+                const progressPct = totalTopics > 0 ? (completedTopics / totalTopics) * 100 : 0;
+
+                card.innerHTML = `
+                    <div class="subject-header" onclick="toggleTopicList('${paper.id}')">
+                        <div>
+                            <h3 style="font-size: 1.1rem; margin-bottom: 0.2rem;">${paper.name}</h3>
+                            <p style="color: var(--text-dim); font-size: 0.8rem;">कुल ${totalTopics} टॉपिक्स</p>
+                        </div>
+                        <span id="pct_${paper.id}" style="color: var(--primary); font-weight: 700;">${Math.round(progressPct)}%</span>
+                    </div>
+                    <div class="progress-container">
+                        <div class="progress-bar" style="width: ${progressPct}%" id="bar_${paper.id}"></div>
+                    </div>
+                    <div class="topic-list" id="list_${paper.id}">
+                        ${paper.parts.map(part => `
+                            <div class="syllabus-part">
+                                <h4 class="part-title">${part.name}</h4>
+                                <div class="topic-items">
+                                    ${part.topics.map(topic => {
+                    const status = userStatus[topic] || '';
+                    const revs = userRevision[topic] || 0;
+                    const topicEscaped = topic.replace(/'/g, "\\'");
+                    return `
+                                        <div class="topic-item ${status ? 'status-' + status : ''}">
+                                            <input type="checkbox" 
+                                                ${userProgress[topic] ? 'checked' : ''} 
+                                                onchange="updateProgress('${paper.id}', '${topicEscaped}', this.checked)">
+                                            <span style="flex: 1;">${topic}</span>
+                                            <div class="topic-controls">
+                                                <div class="revision-badge" onclick="incrementRevision('${paper.id}', '${topicEscaped}')">
+                                                    <i class="fas fa-redo"></i> ${revs}
+                                                </div>
+                                                <div class="status-circles">
+                                                    <div class="circle red ${status === 'red' ? 'active' : ''}" onclick="updateStatus('${paper.id}', '${topicEscaped}', 'red')"></div>
+                                                    <div class="circle yellow ${status === 'yellow' ? 'active' : ''}" onclick="updateStatus('${paper.id}', '${topicEscaped}', 'yellow')"></div>
+                                                    <div class="circle green ${status === 'green' ? 'active' : ''}" onclick="updateStatus('${paper.id}', '${topicEscaped}', 'green')"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    `;
+                }).join('')}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function toggleTopicList(id) {
+            const list = document.getElementById(`list_${id}`);
+            const isVisible = list.style.display === 'block';
+            list.style.display = isVisible ? 'none' : 'block';
+        }
+
+        function updateAnalytics() {
+            let totalTopics = 0;
+            let totalCompleted = 0;
+
+            const paperProgressData = [];
+            const revisionData = [];
+            const statusCounts = { green: 0, yellow: 0, red: 0, none: 0 };
+
+            syllabus.forEach(paper => {
+                const userProgress = JSON.parse(localStorage.getItem(`progress_${paper.id}`)) || {};
+                const userStatus = JSON.parse(localStorage.getItem(`status_${paper.id}`)) || {};
+                const userRevision = JSON.parse(localStorage.getItem(`revision_${paper.id}`)) || {};
+
+                let pTotal = 0;
+                let pDone = 0;
+                let pRevs = 0;
+
+                paper.parts.forEach(part => {
+                    pTotal += part.topics.length;
+                    part.topics.forEach(topic => {
+                        // Progress
+                        if (userProgress[topic]) pDone++;
+
+                        // Status
+                        const s = userStatus[topic] || 'none';
+                        statusCounts[s]++;
+
+                        // Revisions
+                        pRevs += (userRevision[topic] || 0);
+                    });
+                });
+
+                paperProgressData.push(Math.round(pTotal > 0 ? (pDone / pTotal) * 100 : 0));
+                revisionData.push(pRevs);
+                totalTopics += pTotal;
+                totalCompleted += pDone;
+            });
+
+            // Update Progress Bar
+            const overallPct = totalTopics > 0 ? Math.round((totalCompleted / totalTopics) * 100) : 0;
+            document.getElementById('overallProgressText').textContent = `${overallPct}% एकीकृत प्रगति`;
+            document.getElementById('overallProgressBar').style.width = `${overallPct}%`;
+
+            // Update Radar Chart
+            if (statsChart) {
+                statsChart.data.datasets[0].data = paperProgressData;
+                statsChart.update();
+            }
+
+            // Update Mastery Chart
+            if (masteryChart) {
+                masteryChart.data.datasets[0].data = [statusCounts.green, statusCounts.yellow, statusCounts.red, statusCounts.none];
+                masteryChart.update();
+            }
+
+            // Update Revision Chart
+            if (revisionChart) {
+                revisionChart.data.datasets[0].data = revisionData;
+                revisionChart.update();
+            }
+        }
+    </script>
+</body>
+
+</html>

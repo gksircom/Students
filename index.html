@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>YudhhAbhyas Portal | Login</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+
+<body>
+    <div class="auth-container">
+        <div class="card auth-card fade-in">
+            <div style="margin-bottom: 2rem;">
+                <h1 class="brand" style="font-size: 2.5rem; color: var(--primary);">YudhhAbhyas</h1>
+                छात्र पोर्टल</p>
+            </div>
+
+            <form id="loginForm">
+                <div class="input-group">
+                    <label for="studentId">अकादमी आईडी (ID)</label>
+                    <input type="text" id="studentId" placeholder="आईडी दर्ज करें" required>
+                </div>
+                <div class="input-group">
+                    <label for="password">पासवर्ड</label>
+                    <input type="password" id="password" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">
+                    लॉगिन <i class="fas fa-arrow-right"></i>
+                </button>
+            </form>
+
+            <div id="signupSection" style="display: none; margin-top: 2rem;">
+                <div style="height: 1px; background: var(--border); margin-bottom: 2rem;"></div>
+                <h2 style="margin-bottom: 1.5rem; font-size: 1.2rem; color: var(--primary);">नया नामांकन</h2>
+                <form id="signupForm">
+                    <div class="input-group">
+                        <label for="newName">पूरा नाम</label>
+                        <input type="text" id="newName" placeholder="आपका पूरा नाम" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="newId">अकादमी आईडी चुनें</label>
+                        <input type="text" id="newId" placeholder="e.g. YUDH001" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="newPassword">पासवर्ड बनाएं</label>
+                        <input type="password" id="newPassword" placeholder="••••••••" required>
+                    </div>
+                    <button type="submit" class="btn btn-outline" style="width: 100%; margin-top: 1rem;">
+                        खाता बनाएं (Sign Up)
+                    </button>
+                </form>
+            </div>
+
+            <p style="margin-top: 2.5rem; font-size: 0.95rem;">
+                <a href="#" id="toggleSignup" style="color: var(--primary); text-decoration: none; font-weight: 600;">
+                    नए छात्र? अभी नामांकन करें
+                </a>
+            </p>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        const toggleSignup = document.getElementById('toggleSignup');
+        const signupSection = document.getElementById('signupSection');
+        let isSignup = false;
+
+        toggleSignup.addEventListener('click', (e) => {
+            e.preventDefault();
+            isSignup = !isSignup;
+            signupSection.style.display = isSignup ? 'block' : 'none';
+            document.getElementById('loginForm').style.display = isSignup ? 'none' : 'block';
+            toggleSignup.textContent = isSignup ? 'Back to Login' : 'New here? Enroll Now';
+        });
+    </script>
+</body>
+
+</html>
