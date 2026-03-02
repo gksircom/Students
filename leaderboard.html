@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Battlefield | YudhhAbhyas Leaderboard</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+
+<body>
+    <!-- Desktop Navbar -->
+    <nav class="navbar">
+        <h1 class="brand" style="color: var(--primary);">YudhhAbhyas</h1>
+        <div class="nav-links">
+            <button id="logoutBtn" class="btn btn-outline" style="font-size: 0.9rem; padding: 0.5rem 1rem;">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </button>
+        </div>
+        <!-- Mobile Logout Icon -->
+        <button class="logout-btn btn btn-outline mobile-only"
+            style="padding: 0.5rem; border: none; font-size: 1.2rem; display: block;">
+            <i class="fas fa-sign-out-alt"></i>
+        </button>
+    </nav>
+
+    <main class="main-content">
+        <div class="fade-in" style="margin-bottom: 2rem;">
+            <h2 style="font-size: 1.8rem; color: var(--primary);">रणभूमि (Leaderboard)</h2>
+            <p style="color: var(--text-dim);">तैयारी के आधार पर लाइव रैंकिंग</p>
+        </div>
+
+        <div class="card fade-in">
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; min-width: 500px;">
+                    <thead>
+                        <tr style="border-bottom: 1px solid var(--border); text-align: left;">
+                            <th
+                                style="padding: 1rem; color: var(--text-dim); font-size: 0.8rem; text-transform: uppercase;">
+                                रैंक</th>
+                            <th
+                                style="padding: 1rem; color: var(--text-dim); font-size: 0.8rem; text-transform: uppercase;">
+                                उम्मीदवार (Warrior)</th>
+                            <th
+                                style="padding: 1rem; color: var(--text-dim); font-size: 0.8rem; text-transform: uppercase;">
+                                प्रगति</th>
+                            <th
+                                style="padding: 1rem; color: var(--text-dim); font-size: 0.8rem; text-transform: uppercase;">
+                                पद (Title)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leaderboardBody">
+                        <tr>
+                            <td colspan="4" style="padding: 3rem; text-align: center; color: var(--text-dim);">
+                                <i class="fas fa-sync fa-spin"></i> डेटा लोड हो रहा है...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Bottom Navigation (Mobile) -->
+    <nav class="bottom-nav">
+        <a href="dashboard.html" class="nav-item">
+            <i class="fas fa-th-large"></i>
+            <span>डैशबोर्ड</span>
+        </a>
+        <a href="leaderboard.html" class="nav-item active">
+            <i class="fas fa-trophy"></i>
+            <span>रणभूमि</span>
+        </a>
+    </nav>
+
+    <script src="script.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchLeaderboard();
+        });
+
+        async function fetchLeaderboard() {
+            const tbody = document.getElementById('leaderboardBody');
+            const API_URL = "https://script.google.com/macros/s/AKfycbxhuyzj65oAsWJp0DdEJ4z5zRcUFiPQ09IhzfB3455PaKa6GJmAh2lICljE1fpwiQbyuA/exec";
+
+            try {
+                const response = await fetch(`${API_URL}?action=getLeaderboard`);
+                const data = await response.json();
+
+                tbody.innerHTML = '';
+
+                if (data && data.length > 0) {
+                    processLeaderboardData(data);
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="4" style="padding: 2rem; text-align:center;">No warriors recorded yet. Be the first!</td></tr>';
+                }
+            } catch (err) {
+                console.error("Fetch failed:", err);
+                tbody.innerHTML = '<tr><td colspan="4" style="padding: 2rem; text-align:center; color: var(--accent);">Failed to connect. Using cached Intel.</td></tr>';
+                // Fallback mock data
+                const mockData = [
+                    { name: "Rahul Sharma", totalProgress: 88 },
+                    { name: "Priya Singh", totalProgress: 75 },
+                    { name: "Amit Yadav", totalProgress: 62 },
+                    { name: "Sita Gupta", totalProgress: 40 }
+                ];
+                processLeaderboardData(mockData);
+            }
+        }
+
+        function processLeaderboardData(data) {
+            const tbody = document.getElementById('leaderboardBody');
+            data.sort((a, b) => b.totalProgress - a.totalProgress).forEach((student, index) => {
+                const rank = index + 1;
+                const row = document.createElement('tr');
+                row.style.borderBottom = '1px solid var(--border)';
+                row.className = 'fade-in';
+
+                let titleColor = '#94a3b8';
+                let title = 'Learner';
+                if (student.totalProgress > 80) { title = 'Grand Master'; titleColor = '#fbbf24'; }
+                else if (student.totalProgress > 50) { title = 'Elite Warrior'; titleColor = '#10b981'; }
+
+                row.innerHTML = `
+                    <td style="padding: 1.2rem 1rem;">
+                        <span style="font-weight: 700; color: ${rank <= 3 ? '#fbbf24' : '#64748b'}">#${rank}</span>
+                    </td>
+                    <td style="padding: 1.2rem 1rem;">
+                        <div style="font-weight: 600;">${student.name}</div>
+                    </td>
+                    <td style="padding: 1.2rem 1rem;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div class="progress-container" style="width: 100px; margin: 0; background: rgba(255,255,255,0.05);">
+                                <div class="progress-bar" style="width: ${student.totalProgress}%; background: ${rank === 1 ? 'var(--primary)' : '#334155'}"></div>
+                            </div>
+                            <span style="font-size: 0.85rem; font-weight: 600;">${Math.round(student.totalProgress)}%</span>
+                        </div>
+                    </td>
+                    <td style="padding: 1.2rem 1rem;">
+                        <span style="font-size: 0.75rem; padding: 4px 10px; border-radius: 20px; background: rgba(0,0,0,0.2); color: ${titleColor}; border: 1px solid ${titleColor}33;">
+                            ${title}
+                        </span>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+    </script>
+</body>
+
+</html>
